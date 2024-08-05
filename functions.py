@@ -140,11 +140,3 @@ def platue_fit(E_bins, Energy_error,low,high):
     #print("platue ",np.mean(platues))
     return (jackknife_1D(platues))
 
-'''
-folder_name = 'practice_data_2pt'
-file_name_starting = '2pt_0_*.txt'
-eff_E=read_files_mock(folder_name,file_name_starting)
-#print(len(eff_E))
-print(eff_E[0])
-
-'''
