@@ -79,21 +79,45 @@ def jackknife_1D(l):
     return (jackknife_mean, jackknife_error)
 
 
-def read_files(base_dir):
-
+def read_files(base_dir,momentum):
+    #Time averaging over the data 
     def time_avg(l):
-        n=32
+        n=int(len(l)/2)
         l[1:n]=(l[1:n]+l[-1:-n:-1])/2
         return l[:n+1]
+    
+    #px^2 + py^2
+    def resultant_momentum(px,py):
+        return (px**2+py**2)
+    
+    #reading data of different momentum configuration
+    def load_file(file,momentum):
+        data=np.loadtxt(file)
+        t_final=int(len(data)/64)
 
-    # Function to process two files together
-    def avg_files(file1, file2):
+        count=0
+        d=[]
+        for t in range(t_final):
+            
+            if(resultant_momentum(data[(t*64),0],data[(t*64),1])==momentum):
+                d.append(data[t*64:(t+1)*64,4])
+                count+=1
+                
+            elif (resultant_momentum(data[(t*64),0],data[(t*64),1])>momentum):
+                break
+
+        result=np.mean(d,axis=0)    
+        return result
+ 
+    # Function to average the two files together
+    def avg_files(file1, file2,momentum):
+
         # Read the data from the files
-        data1 = np.loadtxt(file1)
-        data2 = np.loadtxt(file2)
-        
-        result = data1[0:64,4] + data2[0:64,4]
-        return time_avg(result/2)
+        data1 = load_file(file1,momentum)
+        data2 = load_file(file2,momentum)
+
+        result= data1+data2
+        return result
 
     # List to store results from each pair of files
     results = []
@@ -110,13 +134,15 @@ def read_files(base_dir):
             # Check if there are exactly 2 .dat files
             if len(dat_files) == 2:
                 file1, file2 = dat_files
-                result = avg_files(file1, file2)
+                data=avg_files(file1, file2,momentum)
+                result = time_avg(data/2)
                 results.append(result)
                 
             elif len(dat_files) == 1:
                 #print(f"Folder {folder} does not contain exactly 2 .dat files.")
-                data=np.loadtxt(dat_files[0])
-                result=time_avg(data[0:64,4])
+                
+                data=load_file(dat_files[0],momentum)
+                result=time_avg(data)
                 results.append(result)
             else:
                 pass
@@ -140,3 +166,11 @@ def platue_fit(E_bins, Energy_error,low,high):
     #print("platue ",np.mean(platues))
     return (jackknife_1D(platues))
 
+'''
+folder_name = 'practice_data_2pt'
+file_name_starting = '2pt_0_*.txt'
+eff_E=read_files_mock(folder_name,file_name_starting)
+#print(len(eff_E))
+print(eff_E[0])
+
+'''
